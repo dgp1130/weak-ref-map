@@ -1,10 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
 
-declare global {
-  /** Provided by `node --expose-gc`. */
-  var gc: () => void;
-}
-
 describe('WeakRefMap', () => {
   it('should reclaim on gc', async () => {
     for (const index of times(1_000)) {
@@ -39,7 +34,7 @@ async function gc(): Promise<void> {
   await macroTask();
 
   // Trigger GC, clears all unreachable objects behind `WeakRef`.
-  globalThis.gc();
+  globalThis.gc!();
 
   // Wait for all `FinalizationRegistry` callbacks to be invoked.
   await macroTask();
