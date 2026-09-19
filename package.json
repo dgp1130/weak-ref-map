@@ -4,6 +4,7 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "packageManager": "pnpm@12.4.2",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "test": "tsc -p tsconfig.test.json --noEmit && vitest run"
