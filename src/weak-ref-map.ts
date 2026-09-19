@@ -23,12 +23,30 @@ type Token = {__brand: 'token'};
 export class WeakRefMap<Key, Value extends WeakKey>
     extends Map<Key, WeakRef<Value>> {
   private readonly registryTokens = new Map<Key, Token>();
-  private readonly registry = new FinalizationRegistry((key: Key) => {
-    // Drop the key from internal data, as they refer to a `WeakRef` which has
-    // been reclaimed and will never be accessible again.
-    super.delete(key);
-    this.registryTokens.delete(key);
-  });
+  private readonly registry: FinalizationRegistry<Key>;
+
+  /**
+   * @param FinalizationRegistry - The `FinalizationRegistry` class used to
+   *     schedule key cleanup. Defaults to the real engine class; tests inject
+   *     a deterministic mock.
+   */
+  constructor(
+    FinalizationRegistry: typeof globalThis.FinalizationRegistry
+        = globalThis.FinalizationRegistry,
+  ) {
+    super();
+    this.registry = new FinalizationRegistry((key) => {
+      // Drop the key from internal data, as they refer to a `WeakRef` which has
+      // been reclaimed and will never be accessible again. But only if the
+      // entry is still the reclaimed one: a newer `set` for the same key may
+      // arrive after this target was reclaimed but before this callback runs,
+      // and that newer entry must not be deleted.
+      const current = super.get(key);
+      if (!current || current.deref()) return;
+      super.delete(key);
+      this.registryTokens.delete(key);
+    });
+  }
 
   override set(key: Key, ref: WeakRef<Value>): this {
     // Unregister any previous value for this key so the `FinalizationRegistry`
@@ -42,7 +60,7 @@ export class WeakRefMap<Key, Value extends WeakKey>
     // Register the key to be removed when the value falls out of scope.
     const token = {} as Token;
     this.registryTokens.set(key, token);
-    if (!value) this.registry.register(value, key, token);
+    this.registry.register(value, key, token);
 
     // Store the weak reference itself.
     super.set(key, ref);
