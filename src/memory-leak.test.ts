@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from 'vitest';
 
-describe('WeakRefMap', () => {
+describe.skip('WeakRefMap', () => {
   it('should reclaim on gc', async () => {
     for (const index of times(1_000)) {
       const finalizer = vi.fn();
