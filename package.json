@@ -7,7 +7,9 @@
   "packageManager": "pnpm@12.4.2",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
-    "test": "tsc -p tsconfig.test.json --noEmit && vitest run"
+    "test": "pnpm run -s test:typecheck && pnpm run -s test:vitest",
+    "test:typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test:vitest": "node --no-concurrent-marking --no-concurrent-sweeping --expose-gc --gc-interval=100 node_modules/vitest/vitest.mjs run"
   },
   "files": ["dist"],
   "devDependencies": {
